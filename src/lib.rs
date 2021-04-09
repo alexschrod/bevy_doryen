@@ -126,7 +126,7 @@ pub mod doryen {
 }
 
 pub use input::{Input, Keys, MouseButton};
-pub use render_system::RenderSystemExtensions;
+pub use render_system::{RenderStage, RenderState, RenderSystemExtensions};
 pub use root_console::RootConsole;
 
 use crate::doryen::{AppOptions, Console};
@@ -176,20 +176,6 @@ impl Default for DoryenPluginSettings {
     }
 }
 
-/// Constants for the Doryen plugin render stages.
-pub mod render_stage {
-    /// This stage runs before all the other stages.
-    pub const FIRST: &str = "first";
-    /// This stage runs right before the render stage.
-    pub const PRE_RENDER: &str = "pre_render";
-    /// This stage is where rendering should be done.
-    pub const RENDER: &str = "render";
-    /// This stage runs right after the render stage.
-    pub const POST_RENDER: &str = "post_render";
-    /// This stage runs after all the other stages.
-    pub const LAST: &str = "last";
-}
-
 impl Plugin for DoryenPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.init_resource::<RootConsole>()
@@ -198,6 +184,7 @@ impl Plugin for DoryenPlugin {
             .add_event::<SetFontPath>()
             .add_event::<Resized>()
             .init_resource::<DoryenRenderSystems>()
+            .init_resource::<RenderState>()
             .set_runner(doryen_runner);
     }
 }
@@ -317,6 +304,17 @@ impl Engine for DoryenPluginEngine {
 
     fn render(&mut self, api: &mut dyn DoryenApi) {
         self.take_root_console_ownership(api);
+
+        let wc = self.bevy_app.world.cell();
+        let mut rs = wc.get_resource_mut::<RenderState>().unwrap();
+        if rs.0 {
+            for f in &rs.1 {
+                f(&wc);
+            }
+            rs.0 = false;
+        }
+        drop(rs);
+        drop(wc);
 
         let mut doryen_render_schedule = self.take_doryen_render_schedule();
         doryen_render_schedule.run(&mut self.bevy_app.world);

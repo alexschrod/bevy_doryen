@@ -19,3 +19,8 @@ doryen-rs = "1.2.3"
 
 [dev-dependencies]
 unicode-segmentation = "1.7"
+
+[patch.crates-io]
+# TODO: Remove these once https://github.com/bevyengine/bevy/pull/1859 is accepted
+bevy_app = { git = "https://github.com/alexschrod/bevy", branch = "state_full_search" }
+bevy_ecs = { git = "https://github.com/alexschrod/bevy", branch = "state_full_search" }
